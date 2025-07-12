@@ -4,7 +4,16 @@
   "files": [],
   "references": [
     {
-      "path": "./apps/sochipark-apk-frontend"
+      "path": "./apps/sochipark-apk"
+    },
+    {
+      "path": "./libs/shared/ui"
+    },
+    {
+      "path": "./apps/sochipark-photo-services"
+    },
+    {
+      "path": "./libs/sochipark-apk-features"
     }
   ]
 }

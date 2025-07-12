@@ -1,0 +1,103 @@
+@use "@styles/variables" as *;
+
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 14px;
+
+  .table-number {
+    min-width: 50px;
+    padding: 0 12px 0 20px;
+  }
+
+  .table-play {
+    padding: 20px 0 20px 20px;
+    min-width: 60px;
+    width: 60px;
+  }
+
+  .table-play + .table-number {
+    min-width: 50px;
+    padding: 0 12px 0 24px;
+  }
+
+  th,
+  td {
+    padding: 20px 12px;
+    font-family: inherit;
+    font-weight: 500;
+    font-size: 18px;
+    text-align: left;
+    color: $color-black;
+
+    &:last-child {
+      padding: 20px 20px 20px 12px;
+      width: 96px;
+    }
+  }
+
+  thead {
+    tr {
+      background-color: $bg-primary-opacity;
+    }
+
+    th {
+      font-weight: 600;
+
+      &:not(:first-child, :last-child) {
+        min-width: 325px;
+      }
+    }
+  }
+
+  tbody {
+    tr:nth-child(odd) {
+      background-color: $bg-white;
+    }
+
+    tr:nth-child(even) {
+      background-color: $bg-primary-opacity;
+
+      td:first-child {
+        border-top-left-radius: 8px;
+        border-bottom-left-radius: 8px;
+      }
+      td:last-child {
+        border-top-right-radius: 8px;
+        border-bottom-right-radius: 8px;
+      }
+    }
+  }
+
+  .table-actions {
+    display: flex;
+    gap: 16px;
+  }
+
+  .table-total {
+    th:first-child {
+      width: 50px;
+    }
+
+    th:nth-child(2) {
+      width: 480px;
+    }
+
+    th:nth-child(3) {
+      width: 480px;
+    }
+
+    td {
+      font-family: inherit;
+      font-weight: 600;
+      font-size: 18px;
+      color: $color-black;
+    }
+  }
+}

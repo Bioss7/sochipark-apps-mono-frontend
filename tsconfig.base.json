@@ -5,7 +5,7 @@
     "emitDeclarationOnly": true,
     "importHelpers": true,
     "isolatedModules": true,
-    "lib": ["es2022"],
+    "lib": ["es2022", "dom"],
     "module": "esnext",
     "moduleResolution": "bundler",
     "noEmitOnError": true,
@@ -16,6 +16,14 @@
     "skipLibCheck": true,
     "strict": true,
     "target": "es2022",
-    "customConditions": ["development"]
+    "customConditions": ["development"],
+    "baseUrl": ".",
+    "paths": {
+      "@sochipark-apps-mono-frontend/sochipark-apk-features": [
+        "./libs/sochipark-apk-features/src"
+      ],
+      "@sochipark-apps-mono-frontend/ui": ["./libs/shared/ui/src"],
+      // "@assets/*": ["libs/shared/ui/src/lib/assets/*"]
+    }
   }
 }
