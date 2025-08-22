@@ -6,6 +6,7 @@ interface IInputProps {
   type?: "text" | "time" | "password" | "number";
   value?: string;
   onChange?: (value: string) => void;
+  onBlur?: (value: string) => void; 
   placeholder?: string;
   label?: string;
   description?: string;
@@ -18,6 +19,7 @@ export const Input: FC<IInputProps> = ({
   type = "text",
   value: propValue,
   onChange,
+  onBlur,
   placeholder = "",
   label = "",
   description = "Description",
@@ -39,6 +41,10 @@ export const Input: FC<IInputProps> = ({
     const newValue = e.target.value;
     setLocalValue(newValue);
     onChange?.(newValue);
+  };
+
+  const handleBlur = () => {
+    onBlur?.(localValue);
   };
 
   const togglePasswordVisibility = () => {
@@ -66,6 +72,7 @@ export const Input: FC<IInputProps> = ({
           type={type === "password" && showPassword ? "text" : type}
           value={localValue}
           onChange={handleChange}
+          onBlur={handleBlur} 
           placeholder={placeholder}
           disabled={disabled}
         />

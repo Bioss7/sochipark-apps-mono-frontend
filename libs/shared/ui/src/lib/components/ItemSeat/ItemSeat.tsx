@@ -1,19 +1,48 @@
-import { FC, useRef } from "react";
-import "./styles.scss";
-import { Icon } from "../Icon";
+import { FC, useRef, memo } from 'react';
+import './styles.scss';
+import { Icon } from '../Icon';
 
 interface IItemSeatProps {
-  sector: "A" | "B" | "C" | "D" | "E";
-  icon?: "OFF" | "BLOCK" | "TEMP_BLOCK" | "BOOK" | "CLEAR" | null;
+  sector: 'A' | 'B' | 'C' | 'D' | 'E';
+  icon?: 'OFF' | 'BLOCK' | 'TEMP_BLOCK' | 'BOOK' | 'CLEAR' | null;
   isDisabled?: boolean;
   isSelected?: boolean;
   onClick?: (e: React.MouseEvent) => void;
-  "data-row"?: number;
-  "data-seat"?: number;
+  'data-row'?: number;
+  'data-seat'?: number;
   seatNumber?: number;
 }
 
-export const ItemSeat: FC<IItemSeatProps> = ({
+const arePropsEqual = (prevProps: IItemSeatProps, nextProps: IItemSeatProps) => {
+  return (
+    prevProps.sector === nextProps.sector &&
+    prevProps.icon === nextProps.icon &&
+    prevProps.isDisabled === nextProps.isDisabled &&
+    prevProps.isSelected === nextProps.isSelected &&
+    prevProps["data-row"] === nextProps["data-row"] &&
+    prevProps["data-seat"] === nextProps["data-seat"] &&
+    prevProps.seatNumber === nextProps.seatNumber
+    // onClick не включаем в сравнение, так как он обычно меняется
+  );
+};
+
+const SECTOR_COLORS = {
+  A: '#264653',
+  B: '#2A9D8F',
+  C: '#7FA12F',
+  D: '#CC66CC',
+  E: '#8338EC',
+} as const;
+
+const ICON_MAP = {
+  OFF: 'off',
+  BLOCK: 'block',
+  TEMP_BLOCK: 'temp-block',
+  BOOK: 'book',
+  CLEAR: 'clear',
+} as const;
+
+const ItemSeatComponent: FC<IItemSeatProps> = ({
   sector,
   icon = null,
   isDisabled = false,
@@ -22,77 +51,38 @@ export const ItemSeat: FC<IItemSeatProps> = ({
   seatNumber,
   ...props
 }) => {
-  // const [selfSelected, setSelfSelected] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
-  const getSectorColorValue = (): string => {
-    switch (sector) {
-      case "A":
-        return "#264653";
-      case "B":
-        return "#2A9D8F";
-      case "C":
-        return "#7FA12F";
-      case "D":
-        return "#CC66CC";
-      case "E":
-        return "#8338EC";
-      default:
-        return "#264653";
-    }
-  };
-
   const iconColor =
-    isDisabled || isSelected ? "#8E8E8E" : getSectorColorValue();
-
-  const getSectorClass = (): string => {
-    return `sector-${sector.toLowerCase()}`;
-  };
+    isDisabled || isSelected ? '#8E8E8E' : SECTOR_COLORS[sector];
+  const sectorClass = `sector-${sector.toLowerCase()}`;
 
   const getIconComponent = () => {
     if (!icon) return null;
-    let iconName = "";
-    switch (icon) {
-      case "OFF":
-        iconName = "off";
-        break;
-      case "BLOCK":
-        iconName = "block";
-        break;
-      case "TEMP_BLOCK":
-        iconName = "temp-block";
-        break;
-      case "BOOK":
-        iconName = "book";
-        break;
-      case "CLEAR":
-        iconName = "clear";
-        break;
-      default:
-        return null;
-    }
+    const iconName = ICON_MAP[icon];
     return <Icon name={iconName} color={iconColor} />;
   };
 
   const handleClick = (e: React.MouseEvent) => {
-    if (onClick) onClick(e);
+    onClick?.(e);
   };
 
   return (
     <button
       ref={buttonRef}
-      className={`item-seat ${getSectorClass()} ${
-        isDisabled ? "disabled" : ""
-      } ${isSelected ? "selected" : ""} ${icon ? "icon" : ""}`}
+      className={`item-seat ${sectorClass} ${isDisabled ? 'disabled' : ''} ${
+        isSelected ? 'selected' : ''
+      } ${icon ? 'icon' : ''}`}
       onClick={handleClick}
       aria-pressed={isSelected}
       disabled={isDisabled}
-      data-row={props["data-row"]}
-      data-seat={props["data-seat"]}
+      data-row={props['data-row']}
+      data-seat={props['data-seat']}
       title={`${seatNumber}`}
     >
-      {/* {!icon && <span className="seat-number">{seatNumber}</span>} */}
       {icon && getIconComponent()}
     </button>
   );
 };
+
+export const ItemSeat = memo(ItemSeatComponent, arePropsEqual);

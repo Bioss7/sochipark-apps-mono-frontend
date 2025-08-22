@@ -1,4 +1,4 @@
-import { FC, memo, useState, useEffect } from "react";
+import { FC, memo, useState, useEffect, useRef } from "react";
 import { MenuButton } from "./components/MenuButton";
 import "./styles.scss";
 import {
@@ -33,17 +33,6 @@ interface FloatingMenuProps {
 type MenuAction = "disable" | "block" | "temporaryBlock" | "reserve" | "clear";
 type SectorAction = "sectorA" | "sectorB" | "sectorC" | "sectorD" | "sectorE";
 
-interface MenuActionConfig {
-  id: MenuAction;
-  icon: React.ReactNode;
-  label: string;
-}
-
-interface SectorActionConfig {
-  id: SectorAction;
-  icon: React.ReactNode;
-}
-
 const actionIcons = {
   disable: <DisableIcon />,
   block: <BlockIcon />,
@@ -52,19 +41,15 @@ const actionIcons = {
   clear: <ClearIcon />,
 };
 
-const PLACE_ACTIONS: MenuActionConfig[] = [
+const PLACE_ACTIONS = [
   { id: "disable", icon: actionIcons.disable, label: "Отключить" },
   { id: "block", icon: actionIcons.block, label: "Блокировать" },
-  {
-    id: "temporaryBlock",
-    icon: actionIcons.temporaryBlock,
-    label: "Временная блокировка",
-  },
+  { id: "temporaryBlock", icon: actionIcons.temporaryBlock, label: "Временная блокировка" },
   { id: "reserve", icon: actionIcons.reserve, label: "Бронировать" },
   { id: "clear", icon: actionIcons.clear, label: "Очистить" },
 ];
 
-const SECTOR_ACTIONS: SectorActionConfig[] = [
+const SECTOR_ACTIONS = [
   { id: "sectorA", icon: <SectorAIcon /> },
   { id: "sectorB", icon: <SectorBIcon /> },
   { id: "sectorC", icon: <SectorCIcon /> },
@@ -72,24 +57,23 @@ const SECTOR_ACTIONS: SectorActionConfig[] = [
   { id: "sectorE", icon: <SectorEIcon /> },
 ];
 
+// лучше передавать через проп
+const SEATS_PER_ROW = 53;
+
 const getSeatRanges = (selectedSeats: Set<string>) => {
   if (!selectedSeats || selectedSeats.size === 0) return { from: "", to: "" };
 
   const seatNumbers = Array.from(selectedSeats)
     .map((seat) => {
       const [row, seatIndex] = seat.split("-").map(Number);
-      return row * 53 + seatIndex + 1; // 53 мест в ряду
+      return row * SEATS_PER_ROW + seatIndex + 1;
     })
     .sort((a, b) => a - b);
 
-  if (seatNumbers.length === 1) {
-    return { from: seatNumbers[0].toString(), to: seatNumbers[0].toString() };
-  }
-
-  const min = Math.min(...seatNumbers);
-  const max = Math.max(...seatNumbers);
-
-  return { from: min.toString(), to: max.toString() };
+  return {
+    from: seatNumbers[0].toString(),
+    to: seatNumbers[seatNumbers.length - 1].toString(),
+  };
 };
 
 export const FloatingMenu: FC<FloatingMenuProps> = memo(
@@ -105,22 +89,29 @@ export const FloatingMenu: FC<FloatingMenuProps> = memo(
   }) => {
     const [isHidden, setIsHidden] = useState(initialIsHidden);
     const [inputValues, setInputValues] = useState({ from: "", to: "" });
+    const isEditing = useRef(false); // следим, редактирует ли пользователь
 
+    // синхронизация из selectedSeats только если пользователь НЕ редактирует
     useEffect(() => {
-      if (selectedSeats.size === 0) return;
-      
-      const ranges = getSeatRanges(selectedSeats);
-      setInputValues(ranges);
+      if (isEditing.current) return;
+      if (selectedSeats.size === 0) {
+        setInputValues({ from: "", to: "" });
+        return;
+      }
+      setInputValues(getSeatRanges(selectedSeats));
     }, [selectedSeats]);
 
-    const handleFromChange = (value: string) => {
-      setInputValues((prev) => ({ ...prev, from: value }));
-      onSeatRangeChange?.(value, inputValues.to);
+    const handleChange = (field: "from" | "to", value: string) => {
+      isEditing.current = true; // блокируем внешние апдейты
+      setInputValues((prev) => {
+        const updated = { ...prev, [field]: value };
+        onSeatRangeChange?.(updated.from, updated.to);
+        return updated;
+      });
     };
 
-    const handleToChange = (value: string) => {
-      setInputValues((prev) => ({ ...prev, to: value }));
-      onSeatRangeChange?.(inputValues.from, value);
+    const handleBlur = () => {
+      isEditing.current = false; // после завершения ввода разрешаем внешние апдейты
     };
 
     const toggleMenu = () => {
@@ -131,22 +122,8 @@ export const FloatingMenu: FC<FloatingMenuProps> = memo(
       });
     };
 
-    const handleActionClick = (
-      action: "disable" | "block" | "temporaryBlock" | "reserve" | "clear"
-    ) => {
-      onActionClick?.(action);
-    };
-
-    const handleSectorClick = (sector: "A" | "B" | "C" | "D" | "E") => {
-      onSectorChange?.(sector);
-    };
-
     return (
-      <div
-        className={`floating-menu ${isHidden ? "hidden" : ""} ${
-          isFixed ? "" : "static"
-        }`}
-      >
+      <div className={`floating-menu ${isHidden ? "hidden" : ""} ${isFixed ? "" : "static"}`}>
         <div className="floating-menu__elements">
           <div className="floating-menu__title">Управление местами</div>
           {isHidden && (
@@ -158,7 +135,7 @@ export const FloatingMenu: FC<FloatingMenuProps> = memo(
                   label={action.label}
                   isActive={false}
                   isHidden={isHidden}
-                  onClick={() => handleActionClick(action.id)}
+                  onClick={() => onActionClick?.(action.id as MenuAction)}
                   className="button-place"
                 />
               ))}
@@ -176,16 +153,7 @@ export const FloatingMenu: FC<FloatingMenuProps> = memo(
                   icon={action.icon}
                   isActive={currentSector === action.id.replace("sector", "")}
                   isHidden={isHidden}
-                  onClick={() =>
-                    handleSectorClick(
-                      action.id.replace("sector", "") as
-                        | "A"
-                        | "B"
-                        | "C"
-                        | "D"
-                        | "E"
-                    )
-                  }
+                  onClick={() => onSectorChange?.(action.id.replace("sector", "") as any)}
                   className="button-sector"
                 />
               ))}
@@ -201,23 +169,21 @@ export const FloatingMenu: FC<FloatingMenuProps> = memo(
                 type="number"
                 placeholder="От"
                 value={inputValues.from}
-                onChange={handleFromChange}
+                onChange={(v) => handleChange("from", v)}
+                onBlur={handleBlur}
               />
               <Input
                 type="number"
                 placeholder="До"
                 value={inputValues.to}
-                onChange={handleToChange}
+                onChange={(v) => handleChange("to", v)}
+                onBlur={handleBlur}
               />
             </div>
           )}
         </div>
 
-        <button
-          className="button-toggle"
-          onClick={toggleMenu}
-          aria-label={isHidden ? "Показать меню" : "Скрыть меню"}
-        >
+        <button className="button-toggle" onClick={toggleMenu} aria-label={isHidden ? "Показать меню" : "Скрыть меню"}>
           {isHidden ? <ArrowDownIcon /> : <ArrowUpIcon />}
         </button>
       </div>
